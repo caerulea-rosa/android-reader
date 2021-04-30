@@ -2,20 +2,13 @@ package com.github.axet.bookreader.app;
 
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.graphics.Bitmap;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.graphics.*;
 import android.support.v7.preference.PreferenceManager;
 import android.util.DisplayMetrics;
-
 import com.github.axet.androidlibrary.app.Natives;
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.k2pdfopt.Config;
 import com.github.axet.k2pdfopt.K2PdfOpt;
-
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 
 import java.util.HashMap;

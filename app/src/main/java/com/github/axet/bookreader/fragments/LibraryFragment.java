@@ -18,35 +18,18 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.SubMenu;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.ViewParent;
-import android.widget.AdapterView;
-import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.ProgressBar;
-import android.widget.TextView;
-
+import android.view.*;
+import android.widget.*;
 import com.github.axet.androidlibrary.net.HttpClient;
 import com.github.axet.androidlibrary.services.StorageProvider;
-import com.github.axet.androidlibrary.widgets.CacheImagesAdapter;
-import com.github.axet.androidlibrary.widgets.CacheImagesRecyclerAdapter;
-import com.github.axet.androidlibrary.widgets.InvalidateOptionsMenuCompat;
-import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.SearchView;
-import com.github.axet.androidlibrary.widgets.TextMax;
+import com.github.axet.androidlibrary.widgets.*;
 import com.github.axet.bookreader.R;
 import com.github.axet.bookreader.activities.MainActivity;
 import com.github.axet.bookreader.app.BookApplication;
 import com.github.axet.bookreader.app.Storage;
 import com.github.axet.bookreader.widgets.BookmarksDialog;
 import com.github.axet.bookreader.widgets.FBReaderView;
-
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
@@ -89,7 +72,7 @@ public class LibraryFragment extends Fragment implements MainActivity.SearchList
         }
 
         public void create(View v) {
-            grid = (RecyclerView) v.findViewById(R.id.grid);
+            grid = v.findViewById(R.id.grid);
 
             // DividerItemDecoration divider = new DividerItemDecoration(context, DividerItemDecoration.VERTICAL);
             // grid.addItemDecoration(divider);
@@ -98,7 +81,7 @@ public class LibraryFragment extends Fragment implements MainActivity.SearchList
 
             toolbar = v.findViewById(R.id.search_header_toolbar_parent);
             searchpanel = v.findViewById(R.id.search_panel);
-            searchtoolbar = (LinearLayout) v.findViewById(R.id.search_header_toolbar);
+            searchtoolbar = v.findViewById(R.id.search_header_toolbar);
 
             toolbar.setVisibility(View.GONE);
 
@@ -384,10 +367,10 @@ public class LibraryFragment extends Fragment implements MainActivity.SearchList
 
             public BookHolder(View itemView) {
                 super(itemView);
-                aa = (TextView) itemView.findViewById(R.id.book_authors);
-                tt = (TextView) itemView.findViewById(R.id.book_title);
-                image = (ImageView) itemView.findViewById(R.id.book_cover);
-                progress = (ProgressBar) itemView.findViewById(R.id.book_progress);
+                aa = itemView.findViewById(R.id.book_authors);
+                tt = itemView.findViewById(R.id.book_title);
+                image = itemView.findViewById(R.id.book_cover);
+                progress = itemView.findViewById(R.id.book_progress);
             }
         }
 

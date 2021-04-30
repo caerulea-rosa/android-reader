@@ -4,13 +4,11 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.util.SparseArray;
-
 import com.github.axet.androidlibrary.app.Natives;
 import com.github.axet.androidlibrary.widgets.CacheImagesAdapter;
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.bookreader.widgets.ScrollWidget;
 import com.github.axet.djvulibre.Config;
-
 import org.geometerplus.fbreader.book.AbstractBook;
 import org.geometerplus.fbreader.book.BookUtil;
 import org.geometerplus.fbreader.bookmodel.BookModel;

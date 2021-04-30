@@ -19,7 +19,6 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.TextView;
-
 import com.github.axet.androidlibrary.app.AlarmManager;
 import com.github.axet.androidlibrary.app.FileTypeDetector;
 import com.github.axet.androidlibrary.app.RarSAF;
@@ -29,7 +28,9 @@ import com.github.axet.androidlibrary.widgets.WebViewCustom;
 import com.github.axet.bookreader.R;
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.wget.SpeedInfo;
-
+import de.innosystec.unrar.Archive;
+import de.innosystec.unrar.NativeStorage;
+import de.innosystec.unrar.rarfile.FileHeader;
 import org.apache.commons.io.IOUtils;
 import org.geometerplus.fbreader.book.BookUtil;
 import org.geometerplus.fbreader.fbreader.FBView;
@@ -49,35 +50,14 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.io.Writer;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
-
-import de.innosystec.unrar.Archive;
-import de.innosystec.unrar.NativeStorage;
-import de.innosystec.unrar.rarfile.FileHeader;
 
 public class Storage extends com.github.axet.androidlibrary.app.Storage {
     public static String TAG = Storage.class.getCanonicalName();
@@ -1029,9 +1009,9 @@ public class Storage extends com.github.axet.androidlibrary.app.Storage {
             if (bm == null && (a || t)) {
                 LayoutInflater inflater = LayoutInflater.from(getContext());
                 View v = inflater.inflate(R.layout.cover_generate, null);
-                TextView aa = (TextView) v.findViewById(R.id.author);
+                TextView aa = v.findViewById(R.id.author);
                 aa.setText(fbook.book.authorsString(", "));
-                TextView tt = (TextView) v.findViewById(R.id.title);
+                TextView tt = v.findViewById(R.id.title);
                 tt.setText(fbook.book.getTitle());
                 bm = renderView(v);
             }

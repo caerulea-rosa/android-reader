@@ -7,14 +7,12 @@ import android.graphics.Rect;
 import android.graphics.pdf.PdfRenderer;
 import android.os.ParcelFileDescriptor;
 import android.util.SparseArray;
-
 import com.github.axet.androidlibrary.app.Natives;
 import com.github.axet.androidlibrary.widgets.CacheImagesAdapter;
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.bookreader.widgets.ScrollWidget;
 import com.github.axet.pdfium.Config;
 import com.github.axet.pdfium.Pdfium;
-
 import org.geometerplus.fbreader.book.AbstractBook;
 import org.geometerplus.fbreader.book.BookUtil;
 import org.geometerplus.fbreader.bookmodel.BookModel;
@@ -36,11 +34,7 @@ import org.geometerplus.zlibrary.ui.android.image.ZLBitmapImage;
 import java.io.File;
 import java.io.IOException;
 import java.text.Normalizer;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 
 public class PDFPlugin extends BuiltinFormatPlugin implements Plugin {
     public static String TAG = PDFPlugin.class.getSimpleName();
@@ -98,7 +92,7 @@ public class PDFPlugin extends BuiltinFormatPlugin implements Plugin {
             this.page = p;
             this.ppage = page;
             this.text = page.open();
-            this.count = (int) text.getCount();
+            this.count = text.getCount();
             this.w = w;
             this.h = h;
             this.index = -1;
@@ -393,9 +387,7 @@ public class PDFPlugin extends BuiltinFormatPlugin implements Plugin {
             if (b.page.count > 0) {
                 point = new Point(b.page.ppage.toPage(0, 0, page.w, page.h, 0, point.x, point.y));
                 int index = b.page.text.getIndex(point.x, point.y);
-                if (index == -1)
-                    return false;
-                return true;
+                return index != -1;
             }
             return false;
         }
@@ -501,9 +493,7 @@ public class PDFPlugin extends BuiltinFormatPlugin implements Plugin {
                 return false;
             Pdfium.Text t = p.open();
             try {
-                if (t != null && t.getCount() > 0)
-                    return true;
-                return false;
+                return t != null && t.getCount() > 0;
             } finally {
                 if (t != null)
                     t.close();
@@ -517,7 +507,7 @@ public class PDFPlugin extends BuiltinFormatPlugin implements Plugin {
             String pattern = str.toLowerCase(Locale.US);
             ArrayList<SearchResult> rr = new ArrayList<>();
             if (text.getCount() > 0) {
-                String str = text.getText(0, (int) text.getCount());
+                String str = text.getText(0, text.getCount());
                 str = str.toLowerCase(Locale.US);
                 int index = str.indexOf(pattern);
                 while (index != -1) {

@@ -15,22 +15,16 @@ import android.support.v4.view.GestureDetectorCompat;
 import android.support.v7.widget.DividerItemDecoration;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.view.GestureDetector;
-import android.view.Gravity;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
 import com.github.axet.androidlibrary.widgets.TopAlwaysSmoothScroller;
 import com.github.axet.bookreader.app.PDFPlugin;
 import com.github.axet.bookreader.app.Plugin;
 import com.github.axet.bookreader.app.Reflow;
 import com.github.axet.bookreader.app.Storage;
-
 import org.geometerplus.fbreader.fbreader.FBView;
 import org.geometerplus.fbreader.fbreader.options.PageTurningOptions;
 import org.geometerplus.zlibrary.core.view.ZLView;
@@ -42,19 +36,79 @@ import org.geometerplus.zlibrary.text.view.ZLTextPosition;
 import org.geometerplus.zlibrary.text.view.ZLTextRegion;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 public class ScrollWidget extends RecyclerView implements ZLViewWidget {
     FBReaderView fb;
     public LinearLayoutManager lm;
     public ScrollAdapter adapter = new ScrollAdapter();
     Gestures gesturesListener;
+
+    public void onReflowerDone() {
+        if (fb.search != null) {
+            if (fb.searchPagePending != -1) {
+                final int p = fb.searchPagePending;
+                fb.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        searchPage(p);
+                    }
+                });
+                fb.searchPagePending = -1;
+            }
+        }
+        if (fb.selection != null) {
+            fb.post(new Runnable() {
+                @Override
+                public void run() {
+                    updateOverlays();
+                }
+            });
+        }
+        if (fb.scrollDelayed != null) {
+            adapter.loadPages(fb.pluginview.reflower);
+            for (int i = 0; i < adapter.pages.size(); i++) {
+                ScrollAdapter.PageCursor c = adapter.pages.get(i);
+                Plugin.Page pinfo = fb.pluginview.getPageInfo(getWidth(), getHeight(), c);
+                if (c.start != null && c.start.getParagraphIndex() == fb.scrollDelayed.getParagraphIndex()) {
+                    Reflow.Info info = new Reflow.Info(fb.pluginview.reflower, c.start.getElementIndex());
+                    double ratio = info.bm.width() / (double) getWidth();
+                    ArrayList<Rect> ss = new ArrayList<>(info.src.keySet());
+                    Collections.sort(ss, new SelectionView.UL());
+                    int offset;
+                    if (fb.scrollDelayed instanceof FBReaderView.ZLTextIndexPosition) {
+                        Plugin.View.Selection s = fb.pluginview.select(fb.scrollDelayed, ((FBReaderView.ZLTextIndexPosition) fb.scrollDelayed).end);
+                        Plugin.View.Selection.Page page = fb.pluginview.selectPage(fb.scrollDelayed, info, pinfo.w, pinfo.h);
+                        Plugin.View.Selection.Bounds bb = s.getBounds(page);
+                        s.close();
+                        Rect union = SelectionView.union(Arrays.asList(bb.rr));
+                        offset = union.top;
+                    } else {
+                        offset = (int) (fb.scrollDelayed.getElementIndex() / pinfo.ratio * ratio);
+                    }
+                    for (Rect s : ss) {
+                        if (s.top > offset || s.bottom >= offset) {
+                            scrollToPosition(i);
+                            int screen = (int) ((s.top - offset) / ratio);
+                            int off = info.src.get(s).top - screen;
+                            if (off > 0)
+                                scrollBy(0, off);
+                            fb.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    updateOverlays();
+                                }
+                            });
+                            adapter.oldTurn = new ZLTextFixedPosition(c.start);
+                            fb.scrollDelayed = null;
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+        lm.onScrollStateChanged(SCROLL_STATE_IDLE);
+    }
 
     public class ScrollAdapter extends RecyclerView.Adapter<ScrollAdapter.PageHolder> {
         public ArrayList<PageCursor> pages = new ArrayList<>(); // adapter items
@@ -326,9 +380,7 @@ public class ScrollWidget extends RecyclerView implements ZLViewWidget {
             boolean isCached(PageCursor c) {
                 if (cache == null || cache != c) // should be same 'cache' memory ref
                     return false;
-                if (bm == null)
-                    return false;
-                return true;
+                return bm != null;
             }
 
             void drawCache(Canvas draw) {
@@ -378,8 +430,7 @@ public class ScrollWidget extends RecyclerView implements ZLViewWidget {
                         return true;
                 }
                 if (end != null && p.end != null) {
-                    if (equals(end, p.end))
-                        return true;
+                    return equals(end, p.end);
                 }
                 return false;
             }
@@ -653,199 +704,6 @@ public class ScrollWidget extends RecyclerView implements ZLViewWidget {
 
         void processClear() {
             invalidates.clear();
-        }
-    }
-
-    public class Gestures implements GestureDetector.OnGestureListener {
-        MotionEvent e;
-        int x;
-        int y;
-        ScrollAdapter.PageView v;
-        ScrollAdapter.PageCursor c;
-        FBReaderView.PinchGesture pinch;
-        GestureDetectorCompat gestures;
-        FBReaderView.BrightnessGesture brightness;
-
-        Gestures() {
-            gestures = new GestureDetectorCompat(fb.getContext(), this);
-            brightness = new FBReaderView.BrightnessGesture(fb);
-
-            if (Looper.myLooper() != null) {
-                pinch = new FBReaderView.PinchGesture(fb) {
-                    @Override
-                    public void onScaleBegin(float x, float y) {
-                        ScrollAdapter.PageView v = findView(x, y);
-                        if (v == null)
-                            return;
-                        int pos = v.holder.getAdapterPosition();
-                        if (pos == -1)
-                            return;
-                        ScrollAdapter.PageCursor c = adapter.pages.get(pos);
-                        int page;
-                        if (c.start == null)
-                            page = c.end.getParagraphIndex() - 1;
-                        else
-                            page = c.start.getParagraphIndex();
-                        pinchOpen(page, new Rect(v.getLeft(), v.getTop(), v.getLeft() + v.getWidth(), v.getTop() + v.getHeight()));
-                    }
-                };
-            }
-        }
-
-        boolean open(MotionEvent e) {
-            if (!openCursor(e))
-                return false;
-            return openText(e);
-        }
-
-        boolean openCursor(MotionEvent e) {
-            this.e = e;
-            v = findView(e);
-            if (v == null)
-                return false;
-            x = (int) (e.getX() - v.getLeft());
-            y = (int) (e.getY() - v.getTop());
-            int pos = v.holder.getAdapterPosition();
-            if (pos == -1)
-                return false;
-            c = adapter.pages.get(pos);
-            return true;
-        }
-
-        boolean openText(MotionEvent e) {
-            if (v.text == null)
-                return false;
-            if (!fb.app.BookTextView.getStartCursor().samePositionAs(c.start))
-                fb.app.BookTextView.gotoPosition(c.start);
-            fb.app.BookTextView.myCurrentPage.TextElementMap = v.text;
-            return true;
-        }
-
-        void closeText() {
-            fb.app.BookTextView.myCurrentPage.TextElementMap = new ZLTextElementAreaVector();
-        }
-
-        @Override
-        public boolean onDown(MotionEvent e) {
-            if (fb.app.BookTextView.mySelection.isEmpty())
-                return false;
-            if (!open(e))
-                return false;
-            fb.app.BookTextView.onFingerPress(x, y);
-            v.invalidate();
-            closeText();
-            return true;
-        }
-
-        @Override
-        public void onShowPress(MotionEvent e) {
-        }
-
-        @Override
-        public boolean onSingleTapUp(MotionEvent e) {
-            if (!open(e)) { // pluginview or reflow
-                ((FBReaderView.CustomView) fb.app.BookTextView).onFingerSingleTapLastResort(e);
-                return true;
-            }
-            fb.app.BookTextView.onFingerSingleTap(x, y);
-            v.invalidate();
-            adapter.invalidates.add(v.holder);
-            closeText();
-            return true;
-        }
-
-        @Override
-        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
-            if (fb.app.BookTextView.mySelection.isEmpty())
-                return false;
-            if (!open(e))
-                return false;
-            fb.app.BookTextView.onFingerMove(x, y);
-            v.invalidate();
-            adapter.invalidates.add(v.holder);
-            closeText();
-            return true;
-        }
-
-        @Override
-        public void onLongPress(MotionEvent e) {
-            if (!openCursor(e))
-                return;
-            if (fb.pluginview != null) {
-                Plugin.View.Selection s = fb.pluginview.select(c.start, v.info, v.getWidth(), v.getHeight(), x, y);
-                if (s != null) {
-                    if (fb.tts != null)
-                        fb.tts.selectionOpen(s);
-                    else
-                        fb.selectionOpen(s);
-                    return;
-                }
-                if (fb.tts != null)
-                    fb.tts.selectionClose();
-                else
-                    fb.selectionClose();
-            }
-            if (!openText(e))
-                return;
-            if (fb.tts != null) {
-                fb.tts.selectionOpen(c, x, y);
-            } else {
-                fb.app.BookTextView.onFingerLongPress(x, y);
-                fb.app.BookTextView.onFingerReleaseAfterLongPress(x, y);
-            }
-            v.invalidate();
-            adapter.invalidates.add(v.holder);
-            closeText();
-        }
-
-        @Override
-        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
-            return false;
-        }
-
-        public boolean onReleaseCheck(MotionEvent e) {
-            if (fb.app.BookTextView.mySelection.isEmpty())
-                return false;
-            if (e.getAction() == MotionEvent.ACTION_UP) {
-                if (!open(e))
-                    return false;
-                fb.app.BookTextView.onFingerRelease(x, y);
-                v.invalidate();
-                closeText();
-                return true;
-            }
-            return false;
-        }
-
-        public boolean onCancelCheck(MotionEvent e) {
-            if (fb.app.BookTextView.mySelection.isEmpty())
-                return false;
-            if (e.getAction() == MotionEvent.ACTION_CANCEL) {
-                fb.app.BookTextView.onFingerEventCancelled();
-                v.invalidate();
-                return true;
-            }
-            return false;
-        }
-
-        public boolean onFilter(MotionEvent e) {
-            if (fb.app.BookTextView.mySelection.isEmpty())
-                return false;
-            return true;
-        }
-
-        public boolean onTouchEvent(MotionEvent e) {
-            if (pinch.onTouchEvent(e))
-                return true;
-            onReleaseCheck(e);
-            onCancelCheck(e);
-            if (brightness.onTouchEvent(e))
-                return true;
-            if (gestures.onTouchEvent(e))
-                return true;
-            if (onFilter(e))
-                return true;
-            return false;
         }
     }
 
@@ -1231,70 +1089,193 @@ public class ScrollWidget extends RecyclerView implements ZLViewWidget {
         return footer != null ? getHeight() - footer.getHeight() : getHeight();
     }
 
-    public void onReflowerDone() {
-        if (fb.search != null) {
-            if (fb.searchPagePending != -1) {
-                final int p = fb.searchPagePending;
-                fb.post(new Runnable() {
+    public class Gestures implements GestureDetector.OnGestureListener {
+        MotionEvent e;
+        int x;
+        int y;
+        ScrollAdapter.PageView v;
+        ScrollAdapter.PageCursor c;
+        FBReaderView.PinchGesture pinch;
+        GestureDetectorCompat gestures;
+        FBReaderView.BrightnessGesture brightness;
+
+        Gestures() {
+            gestures = new GestureDetectorCompat(fb.getContext(), this);
+            brightness = new FBReaderView.BrightnessGesture(fb);
+
+            if (Looper.myLooper() != null) {
+                pinch = new FBReaderView.PinchGesture(fb) {
                     @Override
-                    public void run() {
-                        searchPage(p);
-                    }
-                });
-                fb.searchPagePending = -1;
-            }
-        }
-        if (fb.selection != null) {
-            fb.post(new Runnable() {
-                @Override
-                public void run() {
-                    updateOverlays();
-                }
-            });
-        }
-        if (fb.scrollDelayed != null) {
-            adapter.loadPages(fb.pluginview.reflower);
-            for (int i = 0; i < adapter.pages.size(); i++) {
-                ScrollAdapter.PageCursor c = adapter.pages.get(i);
-                Plugin.Page pinfo = fb.pluginview.getPageInfo(getWidth(), getHeight(), c);
-                if (c.start != null && c.start.getParagraphIndex() == fb.scrollDelayed.getParagraphIndex()) {
-                    Reflow.Info info = new Reflow.Info(fb.pluginview.reflower, c.start.getElementIndex());
-                    double ratio = info.bm.width() / (double) getWidth();
-                    ArrayList<Rect> ss = new ArrayList<>(info.src.keySet());
-                    Collections.sort(ss, new SelectionView.UL());
-                    int offset;
-                    if (fb.scrollDelayed instanceof FBReaderView.ZLTextIndexPosition) {
-                        Plugin.View.Selection s = fb.pluginview.select(fb.scrollDelayed, ((FBReaderView.ZLTextIndexPosition) fb.scrollDelayed).end);
-                        Plugin.View.Selection.Page page = fb.pluginview.selectPage(fb.scrollDelayed, info, pinfo.w, pinfo.h);
-                        Plugin.View.Selection.Bounds bb = s.getBounds(page);
-                        s.close();
-                        Rect union = SelectionView.union(Arrays.asList(bb.rr));
-                        offset = union.top;
-                    } else {
-                        offset = (int) (fb.scrollDelayed.getElementIndex() / pinfo.ratio * ratio);
-                    }
-                    for (Rect s : ss) {
-                        if (s.top <= offset && s.bottom >= offset || s.top > offset) {
-                            scrollToPosition(i);
-                            int screen = (int) ((s.top - offset) / ratio);
-                            int off = info.src.get(s).top - screen;
-                            if (off > 0)
-                                scrollBy(0, off);
-                            fb.post(new Runnable() {
-                                @Override
-                                public void run() {
-                                    updateOverlays();
-                                }
-                            });
-                            adapter.oldTurn = new ZLTextFixedPosition(c.start);
-                            fb.scrollDelayed = null;
+                    public void onScaleBegin(float x, float y) {
+                        ScrollAdapter.PageView v = findView(x, y);
+                        if (v == null)
                             return;
-                        }
+                        int pos = v.holder.getAdapterPosition();
+                        if (pos == -1)
+                            return;
+                        ScrollAdapter.PageCursor c = adapter.pages.get(pos);
+                        int page;
+                        if (c.start == null)
+                            page = c.end.getParagraphIndex() - 1;
+                        else
+                            page = c.start.getParagraphIndex();
+                        pinchOpen(page, new Rect(v.getLeft(), v.getTop(), v.getLeft() + v.getWidth(), v.getTop() + v.getHeight()));
                     }
-                }
+                };
             }
         }
-        lm.onScrollStateChanged(SCROLL_STATE_IDLE);
+
+        boolean open(MotionEvent e) {
+            if (!openCursor(e))
+                return false;
+            return openText(e);
+        }
+
+        boolean openCursor(MotionEvent e) {
+            this.e = e;
+            v = findView(e);
+            if (v == null)
+                return false;
+            x = (int) (e.getX() - v.getLeft());
+            y = (int) (e.getY() - v.getTop());
+            int pos = v.holder.getAdapterPosition();
+            if (pos == -1)
+                return false;
+            c = adapter.pages.get(pos);
+            return true;
+        }
+
+        boolean openText(MotionEvent e) {
+            if (v.text == null)
+                return false;
+            if (!fb.app.BookTextView.getStartCursor().samePositionAs(c.start))
+                fb.app.BookTextView.gotoPosition(c.start);
+            fb.app.BookTextView.myCurrentPage.TextElementMap = v.text;
+            return true;
+        }
+
+        void closeText() {
+            fb.app.BookTextView.myCurrentPage.TextElementMap = new ZLTextElementAreaVector();
+        }
+
+        @Override
+        public boolean onDown(MotionEvent e) {
+            if (fb.app.BookTextView.mySelection.isEmpty())
+                return false;
+            if (!open(e))
+                return false;
+            fb.app.BookTextView.onFingerPress(x, y);
+            v.invalidate();
+            closeText();
+            return true;
+        }
+
+        @Override
+        public void onShowPress(MotionEvent e) {
+        }
+
+        @Override
+        public boolean onSingleTapUp(MotionEvent e) {
+            if (!open(e)) { // pluginview or reflow
+                ((FBReaderView.CustomView) fb.app.BookTextView).onFingerSingleTapLastResort(e);
+                return true;
+            }
+            fb.app.BookTextView.onFingerSingleTap(x, y);
+            v.invalidate();
+            adapter.invalidates.add(v.holder);
+            closeText();
+            return true;
+        }
+
+        @Override
+        public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+            if (fb.app.BookTextView.mySelection.isEmpty())
+                return false;
+            if (!open(e))
+                return false;
+            fb.app.BookTextView.onFingerMove(x, y);
+            v.invalidate();
+            adapter.invalidates.add(v.holder);
+            closeText();
+            return true;
+        }
+
+        @Override
+        public void onLongPress(MotionEvent e) {
+            if (!openCursor(e))
+                return;
+            if (fb.pluginview != null) {
+                Plugin.View.Selection s = fb.pluginview.select(c.start, v.info, v.getWidth(), v.getHeight(), x, y);
+                if (s != null) {
+                    if (fb.tts != null)
+                        fb.tts.selectionOpen(s);
+                    else
+                        fb.selectionOpen(s);
+                    return;
+                }
+                if (fb.tts != null)
+                    fb.tts.selectionClose();
+                else
+                    fb.selectionClose();
+            }
+            if (!openText(e))
+                return;
+            if (fb.tts != null) {
+                fb.tts.selectionOpen(c, x, y);
+            } else {
+                fb.app.BookTextView.onFingerLongPress(x, y);
+                fb.app.BookTextView.onFingerReleaseAfterLongPress(x, y);
+            }
+            v.invalidate();
+            adapter.invalidates.add(v.holder);
+            closeText();
+        }
+
+        @Override
+        public boolean onFling(MotionEvent e1, MotionEvent e2, float velocityX, float velocityY) {
+            return false;
+        }
+
+        public boolean onReleaseCheck(MotionEvent e) {
+            if (fb.app.BookTextView.mySelection.isEmpty())
+                return false;
+            if (e.getAction() == MotionEvent.ACTION_UP) {
+                if (!open(e))
+                    return false;
+                fb.app.BookTextView.onFingerRelease(x, y);
+                v.invalidate();
+                closeText();
+                return true;
+            }
+            return false;
+        }
+
+        public boolean onCancelCheck(MotionEvent e) {
+            if (fb.app.BookTextView.mySelection.isEmpty())
+                return false;
+            if (e.getAction() == MotionEvent.ACTION_CANCEL) {
+                fb.app.BookTextView.onFingerEventCancelled();
+                v.invalidate();
+                return true;
+            }
+            return false;
+        }
+
+        public boolean onFilter(MotionEvent e) {
+            return !fb.app.BookTextView.mySelection.isEmpty();
+        }
+
+        public boolean onTouchEvent(MotionEvent e) {
+            if (pinch.onTouchEvent(e))
+                return true;
+            onReleaseCheck(e);
+            onCancelCheck(e);
+            if (brightness.onTouchEvent(e))
+                return true;
+            if (gestures.onTouchEvent(e))
+                return true;
+            return onFilter(e);
+        }
     }
 
     public void overlayRemove(ScrollAdapter.PageView view) {

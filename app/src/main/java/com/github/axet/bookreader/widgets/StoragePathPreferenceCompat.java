@@ -7,7 +7,6 @@ import android.content.res.TypedArray;
 import android.net.Uri;
 import android.util.AttributeSet;
 import android.widget.Toast;
-
 import com.github.axet.androidlibrary.widgets.OpenFileDialog;
 import com.github.axet.androidlibrary.widgets.OpenStorageChoicer;
 import com.github.axet.bookreader.R;

@@ -1,19 +1,12 @@
 package com.github.axet.bookreader.app;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.graphics.Canvas;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.Paint;
-import android.graphics.Rect;
+import android.graphics.*;
 import android.support.v4.graphics.ColorUtils;
 import android.util.Log;
-
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.bookreader.widgets.ScrollWidget;
 import com.github.axet.bookreader.widgets.SelectionView;
-
 import org.geometerplus.android.fbreader.libraryService.BookCollectionShadow;
 import org.geometerplus.fbreader.bookmodel.TOCTree;
 import org.geometerplus.fbreader.fbreader.FBReaderApp;

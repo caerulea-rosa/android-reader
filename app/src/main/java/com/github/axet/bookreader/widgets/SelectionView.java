@@ -1,29 +1,19 @@
 package com.github.axet.bookreader.widgets;
 
 import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.Point;
-import android.graphics.Rect;
+import android.graphics.*;
 import android.graphics.drawable.ColorDrawable;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
-
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
 import com.github.axet.bookreader.app.PDFPlugin;
 import com.github.axet.bookreader.app.Plugin;
-
 import org.geometerplus.zlibrary.core.library.ZLibrary;
 import org.geometerplus.zlibrary.core.view.SelectionCursor;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 
 public class SelectionView extends FrameLayout {
     public static final int ARTIFACT_PERCENTS = 15;

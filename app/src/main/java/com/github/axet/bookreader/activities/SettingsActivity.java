@@ -8,19 +8,14 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v7.app.ActionBar;
 import android.support.v7.preference.PreferenceFragmentCompat;
 import android.view.MenuItem;
-
 import com.github.axet.androidlibrary.activities.AppCompatSettingsThemeActivity;
 import com.github.axet.androidlibrary.preferences.RotatePreferenceCompat;
 import com.github.axet.androidlibrary.preferences.StoragePathPreferenceCompat;
 import com.github.axet.bookreader.R;
 import com.github.axet.bookreader.app.BookApplication;
 import com.github.axet.bookreader.app.Storage;
-
-import java.util.Set;
 
 public class SettingsActivity extends AppCompatSettingsThemeActivity {
     public static final int RESULT_STORAGE = 1;

@@ -7,14 +7,9 @@ import android.graphics.Color;
 import android.graphics.Typeface;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.PopupMenu;
-import android.view.LayoutInflater;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.ImageView;
 import android.widget.TextView;
-
 import com.github.axet.androidlibrary.net.HttpClient;
 import com.github.axet.androidlibrary.preferences.OptimizationPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.TextMax;
@@ -38,9 +33,9 @@ public class BookmarksDialog extends AlertDialog.Builder { // bookmarks list dia
 
         public BMHolder(View itemView) {
             super(itemView);
-            image = (ImageView) itemView.findViewById(R.id.image);
-            text = (TextView) itemView.findViewById(R.id.text);
-            name = (TextView) itemView.findViewById(R.id.name);
+            image = itemView.findViewById(R.id.image);
+            text = itemView.findViewById(R.id.text);
+            name = itemView.findViewById(R.id.name);
         }
     }
 
@@ -71,7 +66,7 @@ public class BookmarksDialog extends AlertDialog.Builder { // bookmarks list dia
         public void onBindViewHolder(final BMHolder h, int position) {
             final TreeListView.TreeNode t = getItem(h.getAdapterPosition(this));
             final Storage.Bookmark tt = (Storage.Bookmark) t.tag;
-            ImageView ex = (ImageView) h.itemView.findViewById(R.id.expand);
+            ImageView ex = h.itemView.findViewById(R.id.expand);
             if (t.nodes.isEmpty())
                 ex.setVisibility(View.INVISIBLE);
             else
@@ -213,7 +208,7 @@ public class BookmarksDialog extends AlertDialog.Builder { // bookmarks list dia
                 });
             } else {
                 Storage.Book tt = (Storage.Book) t.tag;
-                ImageView ex = (ImageView) h.itemView.findViewById(R.id.expand);
+                ImageView ex = h.itemView.findViewById(R.id.expand);
                 if (t.nodes.isEmpty())
                     ex.setVisibility(View.INVISIBLE);
                 else

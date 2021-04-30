@@ -1,12 +1,7 @@
 package com.github.axet.bookreader.fragments;
 
 import android.app.Activity;
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Typeface;
@@ -23,29 +18,10 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
-import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.AdapterView;
-import android.widget.CheckedTextView;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.PopupWindow;
-import android.widget.SeekBar;
-import android.widget.TextView;
-
+import android.view.*;
+import android.widget.*;
 import com.github.axet.androidlibrary.preferences.ScreenlockPreference;
-import com.github.axet.androidlibrary.widgets.ErrorDialog;
-import com.github.axet.androidlibrary.widgets.InvalidateOptionsMenuCompat;
-import com.github.axet.androidlibrary.widgets.PopupWindowCompat;
-import com.github.axet.androidlibrary.widgets.ThemeUtils;
-import com.github.axet.androidlibrary.widgets.TreeListView;
-import com.github.axet.androidlibrary.widgets.TreeRecyclerView;
+import com.github.axet.androidlibrary.widgets.*;
 import com.github.axet.bookreader.BuildConfig;
 import com.github.axet.bookreader.R;
 import com.github.axet.bookreader.activities.FullscreenActivity;
@@ -58,7 +34,6 @@ import com.github.axet.bookreader.widgets.BookmarksDialog;
 import com.github.axet.bookreader.widgets.FBReaderView;
 import com.github.axet.bookreader.widgets.ScrollWidget;
 import com.github.axet.bookreader.widgets.ToolbarButtonView;
-
 import org.geometerplus.fbreader.bookmodel.TOCTree;
 import org.geometerplus.fbreader.fbreader.ActionCode;
 import org.geometerplus.zlibrary.core.util.ZLTTFInfoDetector;
@@ -110,6 +85,9 @@ public class ReaderFragment extends Fragment implements MainActivity.SearchListe
         }
     };
 
+    public ReaderFragment() {
+    }
+
     public static View getOverflowMenuButton(Activity a) {
         return getOverflowMenuButton((ViewGroup) a.findViewById(R.id.toolbar));
     }
@@ -126,427 +104,6 @@ public class ReaderFragment extends Fragment implements MainActivity.SearchListe
             }
         }
         return null;
-    }
-
-    public static class FontsPopup extends PopupWindow {
-        FontAdapter fonts;
-        View fontsFrame;
-        RecyclerView fontsList;
-        TextView fontsText;
-        View fontsize_popup;
-        TextView fontsizepopup_text;
-        SeekBar fontsizepopup_seek;
-        View fontsizepopup_minus;
-        View fontsizepopup_plus;
-
-        public FontsPopup(Context context) {
-            fontsize_popup = LayoutInflater.from(context).inflate(R.layout.font_popup, new FrameLayout(context), false);
-            fontsizepopup_text = (TextView) fontsize_popup.findViewById(R.id.fontsize_text);
-            fontsizepopup_plus = fontsize_popup.findViewById(R.id.fontsize_plus);
-            fontsizepopup_minus = fontsize_popup.findViewById(R.id.fontsize_minus);
-            fontsizepopup_seek = (SeekBar) fontsize_popup.findViewById(R.id.fontsize_seek);
-            fonts = new FontAdapter(context);
-            fonts.clickListener = new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                    fonts.select(position);
-                    setFont(fonts.ff.get(position).name);
-                }
-            };
-            fontsFrame = fontsize_popup.findViewById(R.id.fonts_frame);
-            fontsText = (TextView) fontsize_popup.findViewById(R.id.fonts_text);
-            fontsText.setText(context.getString(R.string.add_more_fonts_to, FONTS.toString()));
-            fontsList = (RecyclerView) fontsize_popup.findViewById(R.id.fonts_list);
-            fontsList.setLayoutManager(new LinearLayoutManager(context));
-            setContentView(fontsize_popup);
-        }
-
-        public void setFont(String str) {
-        }
-
-        public void setFontsize(int f) {
-        }
-
-        public void updateFontsize(int f) {
-        }
-
-        public void loadFonts() {
-            fontsFrame.setVisibility(View.VISIBLE);
-            fontsList.setAdapter(fonts);
-            fonts.addBasics();
-            List<File> files = new ArrayList<>();
-            for (String f : enumerateFonts().keySet())
-                files.add(new File(f));
-            AndroidFontUtil.ourFileSet = new TreeSet<>();
-            AndroidFontUtil.ourFontFileMap = new ZLTTFInfoDetector().collectFonts(files);
-            for (String s : AndroidFontUtil.ourFontFileMap.keySet()) {
-                File[] ff = AndroidFontUtil.ourFontFileMap.get(s);
-                for (File f : ff) {
-                    if (f != null) {
-                        fonts.ff.add(new FontView(s, f));
-                        break; // regular first
-                    }
-                }
-            }
-        }
-
-        public void updateFontsize(final int start, final int end, int f) {
-            fontsizepopup_seek.setMax(end - start);
-            fontsizepopup_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
-                @Override
-                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                    updateFontsize(progress + start);
-                }
-
-                @Override
-                public void onStartTrackingTouch(SeekBar seekBar) {
-                }
-
-                @Override
-                public void onStopTrackingTouch(SeekBar seekBar) {
-                    int p = fontsizepopup_seek.getProgress();
-                    setFontsize(start + p);
-                }
-            });
-            fontsizepopup_seek.setProgress(f - start);
-            fontsizepopup_minus.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int p = fontsizepopup_seek.getProgress();
-                    p--;
-                    if (p < 0)
-                        p = 0;
-                    fontsizepopup_seek.setProgress(p);
-                    setFontsize(start + p);
-                }
-            });
-            fontsizepopup_plus.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    int p = fontsizepopup_seek.getProgress();
-                    p++;
-                    if (p >= end - start)
-                        p = end - start;
-                    fontsizepopup_seek.setProgress(p);
-                    setFontsize(start + p);
-                }
-            });
-        }
-    }
-
-    public static class FontView {
-        public String name;
-        public Typeface font;
-        public File file;
-
-        public FontView(String name, File f) {
-            this.name = name;
-            this.file = f;
-            this.font = Typeface.createFromFile(file);
-        }
-
-        public FontView(String name) {
-            this.name = name;
-            this.font = Typeface.create(name, Typeface.NORMAL);
-        }
-    }
-
-    public static class FontHolder extends RecyclerView.ViewHolder {
-        public CheckedTextView tv;
-
-        public FontHolder(View itemView) {
-            super(itemView);
-            tv = (CheckedTextView) itemView.findViewById(android.R.id.text1);
-        }
-    }
-
-    public static class FontAdapter extends RecyclerView.Adapter<FontHolder> {
-        Context context;
-        public ArrayList<FontView> ff = new ArrayList<>();
-        public int selected;
-        public AdapterView.OnItemClickListener clickListener;
-
-        public FontAdapter(Context context) {
-            this.context = context;
-        }
-
-        public void addBasics() {
-            add("sans-serif"); // "normal"
-            add("serif");
-            add("monospace");
-        }
-
-        public void loadTTF() {
-            addBasics();
-            HashMap<String, String> hh = enumerateFonts();
-            for (String k : hh.keySet()) {
-                String v = hh.get(k);
-                ff.add(new FontView(v, new File(k)));
-            }
-        }
-
-        public void select(String f) {
-            for (int i = 0; i < ff.size(); i++) {
-                if (ff.get(i).name.equals(f)) {
-                    selected = i;
-                }
-            }
-            notifyDataSetChanged();
-        }
-
-        public void select(int i) {
-            selected = i;
-            notifyDataSetChanged();
-        }
-
-        public void add(String f) {
-            ff.add(new FontView(f));
-        }
-
-        @Override
-        public int getItemCount() {
-            return ff.size();
-        }
-
-        @Override
-        public FontHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            final LayoutInflater inflater = LayoutInflater.from(context);
-            View view = inflater.inflate(android.R.layout.select_dialog_singlechoice, parent, false);
-            return new FontHolder(view);
-        }
-
-        @Override
-        public void onBindViewHolder(final FontHolder holder, int position) {
-            holder.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    clickListener.onItemClick(null, null, holder.getAdapterPosition(), -1);
-                }
-            });
-            holder.tv.setChecked(selected == position);
-            holder.tv.setTypeface(ff.get(position).font);
-            holder.tv.setText(ff.get(position).name);
-        }
-    }
-
-    public static class TOCHolder extends TreeRecyclerView.TreeHolder {
-        ImageView i;
-        TextView textView;
-
-        public TOCHolder(View itemView) {
-            super(itemView);
-            i = (ImageView) itemView.findViewById(R.id.image);
-            textView = (TextView) itemView.findViewById(R.id.text);
-        }
-    }
-
-    public class TOCAdapter extends TreeRecyclerView.TreeAdapter<TOCHolder> {
-        TOCTree current;
-
-        public TOCAdapter(List<TOCTree> ll, TOCTree current) {
-            this.current = current;
-            loadTOC(root, ll);
-            load();
-        }
-
-        void loadTOC(TreeListView.TreeNode r, List<TOCTree> tree) {
-            for (TOCTree t : tree) {
-                TreeListView.TreeNode n = new TreeListView.TreeNode(r, t);
-                r.nodes.add(n);
-                if (equals(t, current)) {
-                    n.selected = true; // current selected
-                    r.expanded = true; // parent expanded
-                }
-                if (t.hasChildren()) {
-                    loadTOC(n, t.subtrees());
-                    if (n.expanded) {
-                        n.selected = true;
-                        r.expanded = true;
-                    }
-                }
-            }
-        }
-
-        public int getCurrent() {
-            for (int i = 0; i < getItemCount(); i++) {
-                TOCTree t = (TOCTree) getItem(i).tag;
-                if (equals(t, current))
-                    return i;
-            }
-            return -1;
-        }
-
-        @Override
-        public TOCHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-            LayoutInflater inflater = LayoutInflater.from(getContext());
-            View convertView = inflater.inflate(R.layout.toc_item, null);
-            return new TOCHolder(convertView);
-        }
-
-        @Override
-        public void onBindViewHolder(final TOCHolder h, int position) {
-            TreeListView.TreeNode t = getItem(h.getAdapterPosition(this));
-            TOCTree tt = (TOCTree) t.tag;
-            ImageView ex = (ImageView) h.itemView.findViewById(R.id.expand);
-            if (t.nodes.isEmpty())
-                ex.setVisibility(View.INVISIBLE);
-            else
-                ex.setVisibility(View.VISIBLE);
-            ex.setImageResource(t.expanded ? R.drawable.ic_expand_less_black_24dp : R.drawable.ic_expand_more_black_24dp);
-            h.itemView.setPadding(20 * t.level, 0, 0, 0);
-            if (t.selected) {
-                h.textView.setTypeface(null, Typeface.BOLD);
-                h.i.setColorFilter(null);
-            } else {
-                h.i.setColorFilter(Color.GRAY);
-                h.textView.setTypeface(null, Typeface.NORMAL);
-            }
-            h.textView.setText(tt.getText());
-            h.itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    TOCTree n = (TOCTree) getItem(h.getAdapterPosition(TOCAdapter.this)).tag;
-                    if (n.hasChildren())
-                        return;
-                    fb.gotoPosition(n.getReference());
-                    tocdialog.dismiss();
-                }
-            });
-        }
-
-        boolean equals(TOCTree t, TOCTree t2) {
-            if (t == null || t2 == null)
-                return false;
-            TOCTree.Reference r1 = t.getReference();
-            TOCTree.Reference r2 = t2.getReference();
-            if (r1 == null || r2 == null)
-                return false;
-            return r1.ParagraphIndex == r2.ParagraphIndex;
-        }
-    }
-
-    // http://www.ulduzsoft.com/2012/01/enumerating-the-fonts-on-android-platform/
-    public static class TTFAnalyzer {
-        // This function parses the TTF file and returns the font name specified in the file
-        public String getTtfFontName(File fontFilename) {
-            try {
-                // Parses the TTF file format.
-                // See http://developer.apple.com/fonts/ttrefman/rm06/Chap6.html
-                m_file = new RandomAccessFile(fontFilename, "r");
-
-                // Read the version first
-                int version = readDword();
-
-                // The version must be either 'true' (0x74727565) or 0x00010000
-                if (version != 0x74727565 && version != 0x00010000 && version != 0x4f54544f)
-                    return null;
-
-                // The TTF file consist of several sections called "tables", and we need to know how many of them are there.
-                int numTables = readWord();
-
-                // Skip the rest in the header
-                readWord(); // skip searchRange
-                readWord(); // skip entrySelector
-                readWord(); // skip rangeShift
-
-                // Now we can read the tables
-                for (int i = 0; i < numTables; i++) {
-                    // Read the table entry
-                    int tag = readDword();
-                    readDword(); // skip checksum
-                    int offset = readDword();
-                    int length = readDword();
-
-                    // Now here' the trick. 'name' field actually contains the textual string name.
-                    // So the 'name' string in characters equals to 0x6E616D65
-                    if (tag == 0x6E616D65) {
-                        // Here's the name section. Read it completely into the allocated buffer
-                        byte[] table = new byte[length];
-
-                        m_file.seek(offset);
-                        read(table);
-
-                        // This is also a table. See http://developer.apple.com/fonts/ttrefman/rm06/Chap6name.html
-                        // According to Table 36, the total number of table records is stored in the second word, at the offset 2.
-                        // Getting the count and string offset - remembering it's big endian.
-                        int count = getWord(table, 2);
-                        int string_offset = getWord(table, 4);
-
-                        // Record starts from offset 6
-                        for (int record = 0; record < count; record++) {
-                            // Table 37 tells us that each record is 6 words -> 12 bytes, and that the nameID is 4th word so its offset is 6.
-                            // We also need to account for the first 6 bytes of the header above (Table 36), so...
-                            int nameid_offset = record * 12 + 6;
-                            int platformID = getWord(table, nameid_offset);
-                            int nameid_value = getWord(table, nameid_offset + 6);
-
-                            // Table 42 lists the valid name Identifiers. We're interested in 4 but not in Unicode encoding (for simplicity).
-                            // The encoding is stored as PlatformID and we're interested in Mac encoding
-                            if (nameid_value == 4 && platformID == 1) {
-                                // We need the string offset and length, which are the word 6 and 5 respectively
-                                int name_length = getWord(table, nameid_offset + 8);
-                                int name_offset = getWord(table, nameid_offset + 10);
-
-                                // The real name string offset is calculated by adding the string_offset
-                                name_offset = name_offset + string_offset;
-
-                                // Make sure it is inside the array
-                                if (name_offset >= 0 && name_offset + name_length < table.length)
-                                    return new String(table, name_offset, name_length);
-                            }
-                        }
-                    }
-                }
-
-                return null;
-            } catch (FileNotFoundException e) {
-                // Permissions?
-                return null;
-            } catch (IOException e) {
-                // Most likely a corrupted font file
-                return null;
-            }
-        }
-
-        // Font file; must be seekable
-        private RandomAccessFile m_file = null;
-
-        // Helper I/O functions
-        private int readByte() throws IOException {
-            return m_file.read() & 0xFF;
-        }
-
-        private int readWord() throws IOException {
-            int b1 = readByte();
-            int b2 = readByte();
-
-            return b1 << 8 | b2;
-        }
-
-        private int readDword() throws IOException {
-            int b1 = readByte();
-            int b2 = readByte();
-            int b3 = readByte();
-            int b4 = readByte();
-
-            return b1 << 24 | b2 << 16 | b3 << 8 | b4;
-        }
-
-        private void read(byte[] array) throws IOException {
-            if (m_file.read(array) != array.length)
-                throw new IOException();
-        }
-
-        // Helper
-        private int getWord(byte[] array, int offset) {
-            int b1 = array[offset] & 0xFF;
-            int b2 = array[offset + 1] & 0xFF;
-
-            return b1 << 8 | b2;
-        }
-    }
-
-    public ReaderFragment() {
     }
 
     static public HashMap<String, String> enumerateFonts() {
@@ -612,7 +169,7 @@ public class ReaderFragment extends Fragment implements MainActivity.SearchListe
         final View v = inflater.inflate(R.layout.fragment_reader, container, false);
 
         final MainActivity main = (MainActivity) getActivity();
-        fb = (FBReaderView) v.findViewById(R.id.main_view);
+        fb = v.findViewById(R.id.main_view);
 
         fb.listener = new FBReaderView.Listener() {
             @Override
@@ -1097,9 +654,7 @@ public class ReaderFragment extends Fragment implements MainActivity.SearchListe
     public boolean onKeyUp(int keyCode, KeyEvent event) {
         if ((keyCode == KeyEvent.KEYCODE_VOLUME_DOWN))
             return true;
-        if ((keyCode == KeyEvent.KEYCODE_VOLUME_UP))
-            return true;
-        return false;
+        return (keyCode == KeyEvent.KEYCODE_VOLUME_UP);
     }
 
     @Override
@@ -1109,5 +664,423 @@ public class ReaderFragment extends Fragment implements MainActivity.SearchListe
             return true;
         }
         return false;
+    }
+
+    public static class FontsPopup extends PopupWindow {
+        FontAdapter fonts;
+        View fontsFrame;
+        RecyclerView fontsList;
+        TextView fontsText;
+        View fontsize_popup;
+        TextView fontsizepopup_text;
+        SeekBar fontsizepopup_seek;
+        View fontsizepopup_minus;
+        View fontsizepopup_plus;
+
+        public FontsPopup(Context context) {
+            fontsize_popup = LayoutInflater.from(context).inflate(R.layout.font_popup, new FrameLayout(context), false);
+            fontsizepopup_text = fontsize_popup.findViewById(R.id.fontsize_text);
+            fontsizepopup_plus = fontsize_popup.findViewById(R.id.fontsize_plus);
+            fontsizepopup_minus = fontsize_popup.findViewById(R.id.fontsize_minus);
+            fontsizepopup_seek = fontsize_popup.findViewById(R.id.fontsize_seek);
+            fonts = new FontAdapter(context);
+            fonts.clickListener = new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    fonts.select(position);
+                    setFont(fonts.ff.get(position).name);
+                }
+            };
+            fontsFrame = fontsize_popup.findViewById(R.id.fonts_frame);
+            fontsText = fontsize_popup.findViewById(R.id.fonts_text);
+            fontsText.setText(context.getString(R.string.add_more_fonts_to, FONTS.toString()));
+            fontsList = fontsize_popup.findViewById(R.id.fonts_list);
+            fontsList.setLayoutManager(new LinearLayoutManager(context));
+            setContentView(fontsize_popup);
+        }
+
+        public void setFont(String str) {
+        }
+
+        public void setFontsize(int f) {
+        }
+
+        public void updateFontsize(int f) {
+        }
+
+        public void loadFonts() {
+            fontsFrame.setVisibility(View.VISIBLE);
+            fontsList.setAdapter(fonts);
+            fonts.addBasics();
+            List<File> files = new ArrayList<>();
+            for (String f : enumerateFonts().keySet())
+                files.add(new File(f));
+            AndroidFontUtil.ourFileSet = new TreeSet<>();
+            AndroidFontUtil.ourFontFileMap = new ZLTTFInfoDetector().collectFonts(files);
+            for (String s : AndroidFontUtil.ourFontFileMap.keySet()) {
+                File[] ff = AndroidFontUtil.ourFontFileMap.get(s);
+                for (File f : ff) {
+                    if (f != null) {
+                        fonts.ff.add(new FontView(s, f));
+                        break; // regular first
+                    }
+                }
+            }
+        }
+
+        public void updateFontsize(final int start, final int end, int f) {
+            fontsizepopup_seek.setMax(end - start);
+            fontsizepopup_seek.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+                @Override
+                public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                    updateFontsize(progress + start);
+                }
+
+                @Override
+                public void onStartTrackingTouch(SeekBar seekBar) {
+                }
+
+                @Override
+                public void onStopTrackingTouch(SeekBar seekBar) {
+                    int p = fontsizepopup_seek.getProgress();
+                    setFontsize(start + p);
+                }
+            });
+            fontsizepopup_seek.setProgress(f - start);
+            fontsizepopup_minus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int p = fontsizepopup_seek.getProgress();
+                    p--;
+                    if (p < 0)
+                        p = 0;
+                    fontsizepopup_seek.setProgress(p);
+                    setFontsize(start + p);
+                }
+            });
+            fontsizepopup_plus.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    int p = fontsizepopup_seek.getProgress();
+                    p++;
+                    if (p >= end - start)
+                        p = end - start;
+                    fontsizepopup_seek.setProgress(p);
+                    setFontsize(start + p);
+                }
+            });
+        }
+    }
+
+    public static class FontView {
+        public String name;
+        public Typeface font;
+        public File file;
+
+        public FontView(String name, File f) {
+            this.name = name;
+            this.file = f;
+            this.font = Typeface.createFromFile(file);
+        }
+
+        public FontView(String name) {
+            this.name = name;
+            this.font = Typeface.create(name, Typeface.NORMAL);
+        }
+    }
+
+    public static class FontHolder extends RecyclerView.ViewHolder {
+        public CheckedTextView tv;
+
+        public FontHolder(View itemView) {
+            super(itemView);
+            tv = itemView.findViewById(android.R.id.text1);
+        }
+    }
+
+    public static class FontAdapter extends RecyclerView.Adapter<FontHolder> {
+        public ArrayList<FontView> ff = new ArrayList<>();
+        public int selected;
+        public AdapterView.OnItemClickListener clickListener;
+        Context context;
+
+        public FontAdapter(Context context) {
+            this.context = context;
+        }
+
+        public void addBasics() {
+            add("sans-serif"); // "normal"
+            add("serif");
+            add("monospace");
+        }
+
+        public void loadTTF() {
+            addBasics();
+            HashMap<String, String> hh = enumerateFonts();
+            for (String k : hh.keySet()) {
+                String v = hh.get(k);
+                ff.add(new FontView(v, new File(k)));
+            }
+        }
+
+        public void select(String f) {
+            for (int i = 0; i < ff.size(); i++) {
+                if (ff.get(i).name.equals(f)) {
+                    selected = i;
+                }
+            }
+            notifyDataSetChanged();
+        }
+
+        public void select(int i) {
+            selected = i;
+            notifyDataSetChanged();
+        }
+
+        public void add(String f) {
+            ff.add(new FontView(f));
+        }
+
+        @Override
+        public int getItemCount() {
+            return ff.size();
+        }
+
+        @Override
+        public FontHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            final LayoutInflater inflater = LayoutInflater.from(context);
+            View view = inflater.inflate(android.R.layout.select_dialog_singlechoice, parent, false);
+            return new FontHolder(view);
+        }
+
+        @Override
+        public void onBindViewHolder(final FontHolder holder, int position) {
+            holder.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    clickListener.onItemClick(null, null, holder.getAdapterPosition(), -1);
+                }
+            });
+            holder.tv.setChecked(selected == position);
+            holder.tv.setTypeface(ff.get(position).font);
+            holder.tv.setText(ff.get(position).name);
+        }
+    }
+
+    public static class TOCHolder extends TreeRecyclerView.TreeHolder {
+        ImageView i;
+        TextView textView;
+
+        public TOCHolder(View itemView) {
+            super(itemView);
+            i = itemView.findViewById(R.id.image);
+            textView = itemView.findViewById(R.id.text);
+        }
+    }
+
+    // http://www.ulduzsoft.com/2012/01/enumerating-the-fonts-on-android-platform/
+    public static class TTFAnalyzer {
+        // Font file; must be seekable
+        private RandomAccessFile m_file = null;
+
+        // This function parses the TTF file and returns the font name specified in the file
+        public String getTtfFontName(File fontFilename) {
+            try {
+                // Parses the TTF file format.
+                // See http://developer.apple.com/fonts/ttrefman/rm06/Chap6.html
+                m_file = new RandomAccessFile(fontFilename, "r");
+
+                // Read the version first
+                int version = readDword();
+
+                // The version must be either 'true' (0x74727565) or 0x00010000
+                if (version != 0x74727565 && version != 0x00010000 && version != 0x4f54544f)
+                    return null;
+
+                // The TTF file consist of several sections called "tables", and we need to know how many of them are there.
+                int numTables = readWord();
+
+                // Skip the rest in the header
+                readWord(); // skip searchRange
+                readWord(); // skip entrySelector
+                readWord(); // skip rangeShift
+
+                // Now we can read the tables
+                for (int i = 0; i < numTables; i++) {
+                    // Read the table entry
+                    int tag = readDword();
+                    readDword(); // skip checksum
+                    int offset = readDword();
+                    int length = readDword();
+
+                    // Now here' the trick. 'name' field actually contains the textual string name.
+                    // So the 'name' string in characters equals to 0x6E616D65
+                    if (tag == 0x6E616D65) {
+                        // Here's the name section. Read it completely into the allocated buffer
+                        byte[] table = new byte[length];
+
+                        m_file.seek(offset);
+                        read(table);
+
+                        // This is also a table. See http://developer.apple.com/fonts/ttrefman/rm06/Chap6name.html
+                        // According to Table 36, the total number of table records is stored in the second word, at the offset 2.
+                        // Getting the count and string offset - remembering it's big endian.
+                        int count = getWord(table, 2);
+                        int string_offset = getWord(table, 4);
+
+                        // Record starts from offset 6
+                        for (int record = 0; record < count; record++) {
+                            // Table 37 tells us that each record is 6 words -> 12 bytes, and that the nameID is 4th word so its offset is 6.
+                            // We also need to account for the first 6 bytes of the header above (Table 36), so...
+                            int nameid_offset = record * 12 + 6;
+                            int platformID = getWord(table, nameid_offset);
+                            int nameid_value = getWord(table, nameid_offset + 6);
+
+                            // Table 42 lists the valid name Identifiers. We're interested in 4 but not in Unicode encoding (for simplicity).
+                            // The encoding is stored as PlatformID and we're interested in Mac encoding
+                            if (nameid_value == 4 && platformID == 1) {
+                                // We need the string offset and length, which are the word 6 and 5 respectively
+                                int name_length = getWord(table, nameid_offset + 8);
+                                int name_offset = getWord(table, nameid_offset + 10);
+
+                                // The real name string offset is calculated by adding the string_offset
+                                name_offset = name_offset + string_offset;
+
+                                // Make sure it is inside the array
+                                if (name_offset >= 0 && name_offset + name_length < table.length)
+                                    return new String(table, name_offset, name_length);
+                            }
+                        }
+                    }
+                }
+
+                return null;
+            } catch (FileNotFoundException e) {
+                // Permissions?
+                return null;
+            } catch (IOException e) {
+                // Most likely a corrupted font file
+                return null;
+            }
+        }
+
+        // Helper I/O functions
+        private int readByte() throws IOException {
+            return m_file.read() & 0xFF;
+        }
+
+        private int readWord() throws IOException {
+            int b1 = readByte();
+            int b2 = readByte();
+
+            return b1 << 8 | b2;
+        }
+
+        private int readDword() throws IOException {
+            int b1 = readByte();
+            int b2 = readByte();
+            int b3 = readByte();
+            int b4 = readByte();
+
+            return b1 << 24 | b2 << 16 | b3 << 8 | b4;
+        }
+
+        private void read(byte[] array) throws IOException {
+            if (m_file.read(array) != array.length)
+                throw new IOException();
+        }
+
+        // Helper
+        private int getWord(byte[] array, int offset) {
+            int b1 = array[offset] & 0xFF;
+            int b2 = array[offset + 1] & 0xFF;
+
+            return b1 << 8 | b2;
+        }
+    }
+
+    public class TOCAdapter extends TreeRecyclerView.TreeAdapter<TOCHolder> {
+        TOCTree current;
+
+        public TOCAdapter(List<TOCTree> ll, TOCTree current) {
+            this.current = current;
+            loadTOC(root, ll);
+            load();
+        }
+
+        void loadTOC(TreeListView.TreeNode r, List<TOCTree> tree) {
+            for (TOCTree t : tree) {
+                TreeListView.TreeNode n = new TreeListView.TreeNode(r, t);
+                r.nodes.add(n);
+                if (equals(t, current)) {
+                    n.selected = true; // current selected
+                    r.expanded = true; // parent expanded
+                }
+                if (t.hasChildren()) {
+                    loadTOC(n, t.subtrees());
+                    if (n.expanded) {
+                        n.selected = true;
+                        r.expanded = true;
+                    }
+                }
+            }
+        }
+
+        public int getCurrent() {
+            for (int i = 0; i < getItemCount(); i++) {
+                TOCTree t = (TOCTree) getItem(i).tag;
+                if (equals(t, current))
+                    return i;
+            }
+            return -1;
+        }
+
+        @Override
+        public TOCHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+            LayoutInflater inflater = LayoutInflater.from(getContext());
+            View convertView = inflater.inflate(R.layout.toc_item, null);
+            return new TOCHolder(convertView);
+        }
+
+        @Override
+        public void onBindViewHolder(final TOCHolder h, int position) {
+            TreeListView.TreeNode t = getItem(h.getAdapterPosition(this));
+            TOCTree tt = (TOCTree) t.tag;
+            ImageView ex = h.itemView.findViewById(R.id.expand);
+            if (t.nodes.isEmpty())
+                ex.setVisibility(View.INVISIBLE);
+            else
+                ex.setVisibility(View.VISIBLE);
+            ex.setImageResource(t.expanded ? R.drawable.ic_expand_less_black_24dp : R.drawable.ic_expand_more_black_24dp);
+            h.itemView.setPadding(20 * t.level, 0, 0, 0);
+            if (t.selected) {
+                h.textView.setTypeface(null, Typeface.BOLD);
+                h.i.setColorFilter(null);
+            } else {
+                h.i.setColorFilter(Color.GRAY);
+                h.textView.setTypeface(null, Typeface.NORMAL);
+            }
+            h.textView.setText(tt.getText());
+            h.itemView.setOnClickListener(new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                    TOCTree n = (TOCTree) getItem(h.getAdapterPosition(TOCAdapter.this)).tag;
+                    if (n.hasChildren())
+                        return;
+                    fb.gotoPosition(n.getReference());
+                    tocdialog.dismiss();
+                }
+            });
+        }
+
+        boolean equals(TOCTree t, TOCTree t2) {
+            if (t == null || t2 == null)
+                return false;
+            TOCTree.Reference r1 = t.getReference();
+            TOCTree.Reference r2 = t2.getReference();
+            if (r1 == null || r2 == null)
+                return false;
+            return r1.ParagraphIndex == r2.ParagraphIndex;
+        }
     }
 }

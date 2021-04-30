@@ -30,18 +30,11 @@ import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.text.ClipboardManager;
 import android.util.AttributeSet;
-import android.view.Gravity;
-import android.view.MenuItem;
-import android.view.MotionEvent;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.view.WindowManager;
+import android.view.*;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
-
 import com.github.axet.androidlibrary.net.HttpClient;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 import com.github.axet.androidlibrary.widgets.PinchView;
@@ -56,7 +49,6 @@ import com.github.johnpersano.supertoasts.SuperActivityToast;
 import com.github.johnpersano.supertoasts.SuperToast;
 import com.github.johnpersano.supertoasts.util.OnClickWrapper;
 import com.github.johnpersano.supertoasts.util.OnDismissWrapper;
-
 import org.geometerplus.android.fbreader.NavigationPopup;
 import org.geometerplus.android.fbreader.PopupPanel;
 import org.geometerplus.android.fbreader.SelectionPopup;
@@ -71,11 +63,7 @@ import org.geometerplus.fbreader.bookmodel.TOCTree;
 import org.geometerplus.fbreader.fbreader.ActionCode;
 import org.geometerplus.fbreader.fbreader.FBAction;
 import org.geometerplus.fbreader.fbreader.FBView;
-import org.geometerplus.fbreader.fbreader.options.ColorProfile;
-import org.geometerplus.fbreader.fbreader.options.FooterOptions;
-import org.geometerplus.fbreader.fbreader.options.ImageOptions;
-import org.geometerplus.fbreader.fbreader.options.MiscOptions;
-import org.geometerplus.fbreader.fbreader.options.PageTurningOptions;
+import org.geometerplus.fbreader.fbreader.options.*;
 import org.geometerplus.fbreader.formats.FormatPlugin;
 import org.geometerplus.fbreader.util.AutoTextSnippet;
 import org.geometerplus.fbreader.util.TextSnippet;
@@ -91,32 +79,11 @@ import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.core.view.ZLViewWidget;
 import org.geometerplus.zlibrary.text.hyphenation.ZLTextHyphenator;
 import org.geometerplus.zlibrary.text.model.ZLTextModel;
-import org.geometerplus.zlibrary.text.view.ZLTextControlElement;
-import org.geometerplus.zlibrary.text.view.ZLTextElement;
-import org.geometerplus.zlibrary.text.view.ZLTextElementArea;
-import org.geometerplus.zlibrary.text.view.ZLTextFixedPosition;
-import org.geometerplus.zlibrary.text.view.ZLTextHighlighting;
-import org.geometerplus.zlibrary.text.view.ZLTextHyperlink;
-import org.geometerplus.zlibrary.text.view.ZLTextHyperlinkRegionSoul;
-import org.geometerplus.zlibrary.text.view.ZLTextImageElement;
-import org.geometerplus.zlibrary.text.view.ZLTextImageRegionSoul;
-import org.geometerplus.zlibrary.text.view.ZLTextParagraphCursor;
-import org.geometerplus.zlibrary.text.view.ZLTextPosition;
-import org.geometerplus.zlibrary.text.view.ZLTextRegion;
-import org.geometerplus.zlibrary.text.view.ZLTextSimpleHighlighting;
-import org.geometerplus.zlibrary.text.view.ZLTextView;
-import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
-import org.geometerplus.zlibrary.text.view.ZLTextWordRegionSoul;
+import org.geometerplus.zlibrary.text.view.*;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidPaintContext;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 public class FBReaderView extends RelativeLayout {
     public static final String ACTION_MENU = FBReaderView.class.getCanonicalName() + ".ACTION_MENU";
@@ -2020,7 +1987,7 @@ public class FBReaderView extends RelativeLayout {
             pluginview.updateTheme();
         if (widget instanceof ScrollWidget) {
             ((ScrollWidget) widget).requestLayout(); // repaint views
-            ((ScrollWidget) widget).reset();
+            widget.reset();
         } else {
             widget.reset();
             widget.repaint();

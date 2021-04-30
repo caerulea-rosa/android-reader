@@ -9,11 +9,9 @@ import android.os.ParcelFileDescriptor;
 import android.provider.OpenableColumns;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
 import com.github.axet.androidlibrary.app.AssetsDexLoader;
 import com.github.axet.androidlibrary.services.FileProvider;
 import com.github.axet.androidlibrary.services.StorageProvider;
-
 import org.geometerplus.zlibrary.core.image.ZLFileImage;
 import org.geometerplus.zlibrary.core.image.ZLImageData;
 import org.geometerplus.zlibrary.core.image.ZLImageManager;

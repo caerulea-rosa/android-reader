@@ -3,8 +3,6 @@ package com.github.axet.bookreader.widgets;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Rect;
-import android.media.AudioManager;
-import android.media.ToneGenerator;
 import android.os.Build;
 import android.os.Handler;
 import android.preference.PreferenceManager;
@@ -17,7 +15,6 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
-
 import com.github.axet.androidlibrary.sound.TTS;
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
 import com.github.axet.androidlibrary.widgets.Toast;
@@ -26,22 +23,13 @@ import com.github.axet.bookreader.app.BookApplication;
 import com.github.axet.bookreader.app.Plugin;
 import com.github.axet.bookreader.app.Reflow;
 import com.github.axet.bookreader.app.Storage;
-
 import org.geometerplus.fbreader.fbreader.TextBuildTraverser;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
-import org.geometerplus.zlibrary.text.view.ZLTextElement;
-import org.geometerplus.zlibrary.text.view.ZLTextElementArea;
-import org.geometerplus.zlibrary.text.view.ZLTextElementAreaVector;
-import org.geometerplus.zlibrary.text.view.ZLTextFixedPosition;
-import org.geometerplus.zlibrary.text.view.ZLTextParagraphCursor;
-import org.geometerplus.zlibrary.text.view.ZLTextPosition;
-import org.geometerplus.zlibrary.text.view.ZLTextWord;
-import org.geometerplus.zlibrary.text.view.ZLTextWordCursor;
+import org.geometerplus.zlibrary.text.view.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
 import java.util.Locale;
 
 public class TTSPopup {
@@ -508,7 +496,7 @@ public class TTSPopup {
                 selectNext();
             }
         });
-        play = (ImageView) view.findViewById(R.id.tts_play);
+        play = view.findViewById(R.id.tts_play);
         play.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

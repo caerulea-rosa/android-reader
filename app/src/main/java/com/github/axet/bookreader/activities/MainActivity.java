@@ -1,13 +1,7 @@
 package com.github.axet.bookreader.activities;
 
 import android.annotation.SuppressLint;
-import android.content.BroadcastReceiver;
-import android.content.ContentResolver;
-import android.content.Context;
-import android.content.DialogInterface;
-import android.content.Intent;
-import android.content.IntentFilter;
-import android.content.SharedPreferences;
+import android.content.*;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -21,43 +15,26 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.MenuItemCompat;
 import android.support.v7.app.AlertDialog;
 import android.util.Log;
-import android.view.KeyEvent;
-import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-
 import com.github.axet.androidlibrary.app.FileTypeDetector;
 import com.github.axet.androidlibrary.preferences.AboutPreferenceCompat;
 import com.github.axet.androidlibrary.preferences.RotatePreferenceCompat;
-import com.github.axet.androidlibrary.widgets.CacheImagesAdapter;
-import com.github.axet.androidlibrary.widgets.ErrorDialog;
-import com.github.axet.androidlibrary.widgets.OpenChoicer;
-import com.github.axet.androidlibrary.widgets.OpenFileDialog;
-import com.github.axet.androidlibrary.widgets.SearchView;
-import com.github.axet.androidlibrary.widgets.ThemeUtils;
-import com.github.axet.androidlibrary.widgets.WebViewCustom;
+import com.github.axet.androidlibrary.widgets.*;
 import com.github.axet.bookreader.R;
 import com.github.axet.bookreader.app.BookApplication;
 import com.github.axet.bookreader.app.Storage;
 import com.github.axet.bookreader.fragments.LibraryFragment;
 import com.github.axet.bookreader.fragments.ReaderFragment;
 import com.github.axet.bookreader.widgets.FBReaderView;
-
 import org.geometerplus.fbreader.fbreader.options.ImageOptions;
 import org.geometerplus.fbreader.fbreader.options.MiscOptions;
 import org.geometerplus.zlibrary.text.view.ZLTextPosition;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 public class MainActivity extends FullscreenActivity implements NavigationView.OnNavigationItemSelectedListener {
     public static final String TAG = MainActivity.class.getSimpleName();
@@ -481,7 +458,7 @@ public class MainActivity extends FullscreenActivity implements NavigationView.O
 
             View v = inflater.inflate(R.layout.recent, null);
 
-            final FBReaderView r = (FBReaderView) v.findViewById(R.id.recent_fbview);
+            final FBReaderView r = v.findViewById(R.id.recent_fbview);
             // r.config.setValue(r.app.ViewOptions.ScrollbarType, 0);
             r.config.setValue(r.app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.doNothing);
             r.config.setValue(r.app.ImageOptions.TapAction, ImageOptions.TapActionEnum.doNothing);
@@ -492,7 +469,7 @@ public class MainActivity extends FullscreenActivity implements NavigationView.O
 
             r.loadBook(fbook);
 
-            LinearLayout pages = (LinearLayout) v.findViewById(R.id.recent_pages);
+            LinearLayout pages = v.findViewById(R.id.recent_pages);
 
             List<Storage.RecentInfo> rr = new ArrayList<>();
 

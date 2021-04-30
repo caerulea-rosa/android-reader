@@ -3,19 +3,19 @@ package com.github.axet.bookreader.app;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
-import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
-
 import com.github.axet.androidlibrary.app.RarSAF;
 import com.github.axet.androidlibrary.app.ZipSAF;
 import com.github.axet.androidlibrary.services.StorageProvider;
 import com.github.axet.androidlibrary.widgets.CacheImagesAdapter;
 import com.github.axet.bookreader.widgets.ScrollWidget;
-
+import de.innosystec.unrar.Archive;
+import de.innosystec.unrar.NativeStorage;
+import de.innosystec.unrar.exception.RarException;
+import de.innosystec.unrar.rarfile.FileHeader;
 import net.lingala.zip4j.core.ZipFile;
-
 import org.apache.commons.io.IOUtils;
 import org.geometerplus.fbreader.book.AbstractBook;
 import org.geometerplus.fbreader.book.BookUtil;
@@ -42,11 +42,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.regex.Pattern;
-
-import de.innosystec.unrar.Archive;
-import de.innosystec.unrar.NativeStorage;
-import de.innosystec.unrar.exception.RarException;
-import de.innosystec.unrar.rarfile.FileHeader;
 
 public class ComicsPlugin extends BuiltinFormatPlugin implements Plugin {
     public static String TAG = ComicsPlugin.class.getSimpleName();

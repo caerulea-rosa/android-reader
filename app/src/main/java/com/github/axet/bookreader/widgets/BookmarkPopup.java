@@ -13,7 +13,6 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
-
 import com.github.axet.androidlibrary.widgets.PopupWindowCompat;
 import com.github.axet.androidlibrary.widgets.ThemeUtils;
 import com.github.axet.bookreader.R;
@@ -22,7 +21,7 @@ import com.github.axet.bookreader.app.Storage;
 import java.util.ArrayList;
 
 public class BookmarkPopup { // bookmark click popup
-    public static int COLORS[] = new int[]{0xffff0000, 0xffFF8000, 0xffFFFF00, 0xff00FF00, 0xff0000FF, 0xff3F00FF, 0xff7F00FF};
+    public static int[] COLORS = new int[]{0xffff0000, 0xffFF8000, 0xffFFFF00, 0xff00FF00, 0xff0000FF, 0xff3F00FF, 0xff7F00FF};
 
     public Context context;
     public PopupWindow w;
@@ -54,9 +53,9 @@ public class BookmarkPopup { // bookmark click popup
         int dp2 = ThemeUtils.dp2px(getContext(), 2);
         for (int c : COLORS) {
             final View color = inflater.inflate(R.layout.bm_color, null);
-            ImageView image = (ImageView) color.findViewById(R.id.color);
+            ImageView image = color.findViewById(R.id.color);
             image.setColorFilter(c);
-            final ImageView check = (ImageView) color.findViewById(R.id.checkbox);
+            final ImageView check = color.findViewById(R.id.checkbox);
             check.setVisibility(l.color == c ? View.VISIBLE : View.GONE);
             check.setColorFilter(ColorUtils.calculateLuminance(c) < 0.5f ? Color.WHITE : Color.GRAY);
             color.setTag(c);
@@ -69,7 +68,7 @@ public class BookmarkPopup { // bookmark click popup
                         b.setBackgroundColor(SelectionView.SELECTION_ALPHA << 24 | (l.color & 0xffffff));
                     for (int i = 0; i < hh.getChildCount(); i++) {
                         View color = hh.getChildAt(i);
-                        final ImageView check = (ImageView) color.findViewById(R.id.checkbox);
+                        final ImageView check = color.findViewById(R.id.checkbox);
                         if (check != null) // trash icon
                             check.setVisibility((int) color.getTag() == l.color ? View.VISIBLE : View.GONE);
                     }
