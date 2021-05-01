@@ -3,6 +3,7 @@ package com.github.axet.bookreader.widgets;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,8 +40,8 @@ public class PagerWidget extends ZLAndroidWidget {
     ReflowMap<FBReaderView.TTSView> tts = new ReflowMap<>();
     ReflowMap<FBReaderView.SearchView> searchs = new ReflowMap<>();
     private boolean myPendingPress;
-    private boolean myScreenIsTouched;
     private boolean myLongClickPerformed;
+    private boolean myPendingDoubleTap;
     private Runnable myPendingShortClickRunnable;
     private Runnable myPendingLongClickRunnable;
 
@@ -428,7 +429,6 @@ public class PagerWidget extends ZLAndroidWidget {
 
     private void postLongClickRunnable() {
         myLongClickPerformed = true;
-        myPendingPress = false;
         if (this.myPendingLongClickRunnable == null) {
             this.myPendingLongClickRunnable = new LongClickRunnable();
         }
@@ -445,17 +445,19 @@ public class PagerWidget extends ZLAndroidWidget {
                 if (this.myPendingShortClickRunnable != null) {
                     this.removeCallbacks(this.myPendingShortClickRunnable);
                     this.myPendingShortClickRunnable = null;
+                    myPendingDoubleTap = true;
                 } else {
                     postLongClickRunnable();
-                    myPendingPress = true;
                 }
 
-                myScreenIsTouched = true;
+                set("myScreenIsTouched", true);
                 set("myPressedX", x);
                 set("myPressedY", y);
                 break;
             case 1:
-                if (myLongClickPerformed) {
+                if (this.myPendingDoubleTap) {
+                    view.onFingerDoubleTap(x, y);
+                } else if (myLongClickPerformed) {
                     view.onFingerLongPress((int) get("myPressedX"), (int) get("myPressedY"));
                     view.onFingerReleaseAfterLongPress(x, y);
                 } else {
@@ -480,14 +482,16 @@ public class PagerWidget extends ZLAndroidWidget {
                 }
 
                 myPendingPress = false;
-                myScreenIsTouched = false;
+                set("myScreenIsTouched", false);
                 break;
             case 2:
                 int slop = ViewConfiguration.get(this.getContext()).getScaledTouchSlop();
                 int myPressedX = (int) get("myPressedX");
                 int myPressedY = (int) get("myPressedY");
                 boolean isAMove = Math.abs(myPressedX - x) > slop || Math.abs(myPressedY - y) > slop;
-                myLongClickPerformed = !isAMove;
+                if (isAMove) {
+                    this.myPendingDoubleTap = false;
+                }
 
                 if (myLongClickPerformed) {
                     view.onFingerMoveAfterLongPress(x, y);
@@ -503,15 +507,18 @@ public class PagerWidget extends ZLAndroidWidget {
                         }
 
                         view.onFingerPress(myPressedX, myPressedY);
-                        myPendingPress = false;
+                        if (isAMove) {
+                            myPendingPress = false;
+                        }
                     }
 
                     view.onFingerMove(x, y);
                 }
                 break;
             case 3:
+                myPendingDoubleTap = false;
                 myPendingPress = false;
-                myScreenIsTouched = false;
+                set("myScreenIsTouched", false);
                 myLongClickPerformed = true;
                 if (this.myPendingShortClickRunnable != null) {
                     this.removeCallbacks(this.myPendingShortClickRunnable);
@@ -547,6 +554,7 @@ public class PagerWidget extends ZLAndroidWidget {
 
         public void run() {
             myLongClickPerformed = false;
+            myPendingPress = true;
         }
     }
 

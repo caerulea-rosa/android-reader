@@ -1137,7 +1137,7 @@ public class FBReaderView extends RelativeLayout {
         config.setValue(app.ImageOptions.TapAction, ImageOptions.TapActionEnum.openImageView);
         config.setValue(app.ImageOptions.FitToScreen, FBView.ImageFitting.covers);
 
-        config.setValue(app.MiscOptions.EnableDoubleTap, true);
+        config.setValue(app.MiscOptions.EnableDoubleTap, false);
         config.setValue(app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.openDictionary);
     }
 
@@ -2183,12 +2183,12 @@ public class FBReaderView extends RelativeLayout {
     }
 
     public void showControls() {
-//        ActiveAreasView areas = new ActiveAreasView(getContext());
-//        int w = getWidth();
-//        if (w == 0)
-//            return; // activity closed
-//        areas.create(app, w);
-//        showControls(this, areas);
+        ActiveAreasView areas = new ActiveAreasView(getContext());
+        int w = getWidth();
+        if (w == 0)
+            return; // activity closed
+        areas.create(app, w);
+        showControls(this, areas);
     }
 
     @Override
