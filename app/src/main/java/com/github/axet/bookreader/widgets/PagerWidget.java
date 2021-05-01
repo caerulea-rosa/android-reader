@@ -3,7 +3,6 @@ package com.github.axet.bookreader.widgets;
 import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.os.Looper;
-import android.util.Log;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
@@ -491,6 +490,8 @@ public class PagerWidget extends ZLAndroidWidget {
                 boolean isAMove = Math.abs(myPressedX - x) > slop || Math.abs(myPressedY - y) > slop;
                 if (isAMove) {
                     this.myPendingDoubleTap = false;
+                    myLongClickPerformed = false;
+                    myPendingPress = true;
                 }
 
                 if (myLongClickPerformed) {
@@ -507,17 +508,15 @@ public class PagerWidget extends ZLAndroidWidget {
                         }
 
                         view.onFingerPress(myPressedX, myPressedY);
-                        if (isAMove) {
-                            myPendingPress = false;
-                        }
                     }
 
                     view.onFingerMove(x, y);
+                    myPendingPress = false;
                 }
                 break;
             case 3:
                 myPendingDoubleTap = false;
-                myPendingPress = false;
+                myPendingPress = true;
                 set("myScreenIsTouched", false);
                 myLongClickPerformed = true;
                 if (this.myPendingShortClickRunnable != null) {
