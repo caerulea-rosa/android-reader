@@ -6,15 +6,18 @@ import android.os.Looper;
 import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import com.github.axet.bookreader.app.Plugin;
 import com.github.axet.bookreader.app.Reflow;
 import org.geometerplus.fbreader.fbreader.options.PageTurningOptions;
 import org.geometerplus.zlibrary.core.application.ZLApplication;
+import org.geometerplus.zlibrary.core.view.ZLView;
 import org.geometerplus.zlibrary.core.view.ZLViewEnums;
 import org.geometerplus.zlibrary.text.view.ZLTextFixedPosition;
 import org.geometerplus.zlibrary.text.view.ZLTextPosition;
 import org.geometerplus.zlibrary.ui.android.view.ZLAndroidWidget;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -35,6 +38,11 @@ public class PagerWidget extends ZLAndroidWidget {
     ReflowMap<FBReaderView.BookmarksView> bookmarks = new ReflowMap<>();
     ReflowMap<FBReaderView.TTSView> tts = new ReflowMap<>();
     ReflowMap<FBReaderView.SearchView> searchs = new ReflowMap<>();
+    private boolean myPendingPress;
+    private boolean myScreenIsTouched;
+    private boolean myLongClickPerformed;
+    private Runnable myPendingShortClickRunnable;
+    private Runnable myPendingLongClickRunnable;
 
     public class ReflowMap<V> extends HashMap<ZLTextPosition, V> {
         ArrayList<ZLTextPosition> last = new ArrayList<>();
@@ -396,7 +404,150 @@ public class PagerWidget extends ZLAndroidWidget {
             if (pinch.onTouchEvent(event))
                 return true;
         }
-        return super.onTouchEvent(event);
+        return myOnTouchEvent(event);
+    }
+
+    private void set(String name, Object value) {
+        try {
+            Field field = ZLAndroidWidget.class.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(this, value);
+        } catch (Exception ignored) {
+        }
+    }
+
+    private Object get(String name) {
+        try {
+            Field field = ZLAndroidWidget.class.getDeclaredField(name);
+            field.setAccessible(true);
+            return field.get(this);
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private void postLongClickRunnable() {
+        myLongClickPerformed = true;
+        myPendingPress = false;
+        if (this.myPendingLongClickRunnable == null) {
+            this.myPendingLongClickRunnable = new LongClickRunnable();
+        }
+
+        this.postDelayed(myPendingLongClickRunnable, (long) (2 * ViewConfiguration.getLongPressTimeout()));
+    }
+
+    private boolean myOnTouchEvent(MotionEvent event) {
+        int x = (int) event.getX();
+        int y = (int) event.getY();
+        ZLView view = this.ZLApplication.Instance().getCurrentView();
+        switch (event.getAction()) {
+            case 0:
+                if (this.myPendingShortClickRunnable != null) {
+                    this.removeCallbacks(this.myPendingShortClickRunnable);
+                    this.myPendingShortClickRunnable = null;
+                } else {
+                    postLongClickRunnable();
+                    myPendingPress = true;
+                }
+
+                myScreenIsTouched = true;
+                set("myPressedX", x);
+                set("myPressedY", y);
+                break;
+            case 1:
+                if (myLongClickPerformed) {
+                    view.onFingerLongPress((int) get("myPressedX"), (int) get("myPressedY"));
+                    view.onFingerReleaseAfterLongPress(x, y);
+                } else {
+                    if (this.myPendingLongClickRunnable != null) {
+                        this.removeCallbacks(this.myPendingLongClickRunnable);
+                        this.myPendingLongClickRunnable = null;
+                    }
+
+                    if (myPendingPress) {
+                        if (view.isDoubleTapSupported()) {
+                            if (this.myPendingShortClickRunnable == null) {
+                                this.myPendingShortClickRunnable = new ShortClickRunnable();
+                            }
+
+                            this.postDelayed(this.myPendingShortClickRunnable, (long) ViewConfiguration.getDoubleTapTimeout());
+                        } else {
+                            view.onFingerSingleTap(x, y);
+                        }
+                    } else {
+                        view.onFingerRelease(x, y);
+                    }
+                }
+
+                myPendingPress = false;
+                myScreenIsTouched = false;
+                break;
+            case 2:
+                int slop = ViewConfiguration.get(this.getContext()).getScaledTouchSlop();
+                int myPressedX = (int) get("myPressedX");
+                int myPressedY = (int) get("myPressedY");
+                boolean isAMove = Math.abs(myPressedX - x) > slop || Math.abs(myPressedY - y) > slop;
+                myLongClickPerformed = !isAMove;
+
+                if (myLongClickPerformed) {
+                    view.onFingerMoveAfterLongPress(x, y);
+                } else {
+                    if (myPendingPress) {
+                        if (myPendingShortClickRunnable != null) {
+                            this.removeCallbacks(myPendingShortClickRunnable);
+                            myPendingShortClickRunnable = null;
+                        }
+
+                        if (this.myPendingLongClickRunnable != null) {
+                            this.removeCallbacks(this.myPendingLongClickRunnable);
+                        }
+
+                        view.onFingerPress(myPressedX, myPressedY);
+                        myPendingPress = false;
+                    }
+
+                    view.onFingerMove(x, y);
+                }
+                break;
+            case 3:
+                myPendingPress = false;
+                myScreenIsTouched = false;
+                myLongClickPerformed = true;
+                if (this.myPendingShortClickRunnable != null) {
+                    this.removeCallbacks(this.myPendingShortClickRunnable);
+                    this.myPendingShortClickRunnable = null;
+                }
+
+                if (this.myPendingLongClickRunnable != null) {
+                    this.removeCallbacks(this.myPendingLongClickRunnable);
+                    this.myPendingLongClickRunnable = null;
+                }
+
+                view.onFingerEventCancelled();
+        }
+
+        return true;
+    }
+
+    private class ShortClickRunnable implements Runnable {
+        private ShortClickRunnable() {
+        }
+
+        public void run() {
+            ZLView view = PagerWidget.this.ZLApplication.Instance().getCurrentView();
+            view.onFingerSingleTap((int) get("myPressedX"), (int) get("myPressedY"));
+            myPendingPress = false;
+            PagerWidget.this.myPendingShortClickRunnable = null;
+        }
+    }
+
+    private class LongClickRunnable implements Runnable {
+        private LongClickRunnable() {
+        }
+
+        public void run() {
+            myLongClickPerformed = false;
+        }
     }
 
     Reflow.Info getInfo() {

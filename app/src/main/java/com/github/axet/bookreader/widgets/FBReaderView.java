@@ -53,7 +53,6 @@ import org.geometerplus.android.fbreader.NavigationPopup;
 import org.geometerplus.android.fbreader.PopupPanel;
 import org.geometerplus.android.fbreader.SelectionPopup;
 import org.geometerplus.android.fbreader.TextSearchPopup;
-import org.geometerplus.android.fbreader.dict.DictionaryUtil;
 import org.geometerplus.android.fbreader.libraryService.BookCollectionShadow;
 import org.geometerplus.android.util.UIMessageUtil;
 import org.geometerplus.android.util.UIUtil;
@@ -1138,7 +1137,8 @@ public class FBReaderView extends RelativeLayout {
         config.setValue(app.ImageOptions.TapAction, ImageOptions.TapActionEnum.openImageView);
         config.setValue(app.ImageOptions.FitToScreen, FBView.ImageFitting.covers);
 
-        config.setValue(app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.startSelecting);
+        config.setValue(app.MiscOptions.EnableDoubleTap, true);
+        config.setValue(app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.openDictionary);
     }
 
     public void setWidget(Widgets w) {
@@ -1490,18 +1490,11 @@ public class FBReaderView extends RelativeLayout {
                         }
                     });
                 } else if (soul instanceof ZLTextWordRegionSoul) {
-                    DictionaryUtil.openTextInDictionary(
-                            a,
-                            ((ZLTextWordRegionSoul) soul).Word.getString(),
-                            true,
-                            region.getTop(),
-                            region.getBottom(),
-                            new Runnable() {
-                                public void run() {
-                                    // a.outlineRegion(soul);
-                                }
-                            }
-                    );
+                    String text = ((ZLTextWordRegionSoul) soul).Word.getString();
+                    Intent intent = translateIntent(text);
+                    getContext().startActivity(intent);
+                    app.BookTextView.hideOutline();
+                    widget.repaint();
                 }
             }
         });
@@ -1606,22 +1599,7 @@ public class FBReaderView extends RelativeLayout {
         app.addAction(ActionCode.SELECTION_TRANSLATE, new FBAction(app) {
             @Override
             protected void run(Object... params) {
-                final String text;
-
-                if (selection != null) {
-                    text = selection.selection.getText();
-                } else {
-                    TextSnippet snippet = app.BookTextView.getSelectedSnippet();
-                    if (snippet == null)
-                        return;
-                    text = snippet.getText();
-                }
-
-                Intent intent = translateIntent(text);
-                getContext().startActivity(intent);
-
-                app.BookTextView.clearSelection();
-                selectionClose();
+                translateSelectedText();
             }
         });
         app.addAction(ActionCode.SELECTION_BOOKMARK, new FBAction(app) {
@@ -1791,6 +1769,28 @@ public class FBReaderView extends RelativeLayout {
         ((PopupPanel) app.getPopupById(SelectionPopup.ID)).setPanelInfo(a, this);
     }
 
+    private void translateSelectedText() {
+        final String text = getSelectedText();
+        if (text != null) {
+            Intent intent = translateIntent(text);
+            getContext().startActivity(intent);
+
+            app.BookTextView.clearSelection();
+            selectionClose();
+        }
+    }
+
+    private String getSelectedText() {
+        String text;
+        if (selection != null) {
+            text = selection.selection.getText();
+        } else {
+            TextSnippet snippet = app.BookTextView.getSelectedSnippet();
+            text = snippet == null ? null : snippet.getText();
+        }
+        return text;
+    }
+
     public void scrollNextPage() {
         final PageTurningOptions preferences = app.PageTurningOptions;
         widget.startAnimatedScrolling(
@@ -1837,7 +1837,7 @@ public class FBReaderView extends RelativeLayout {
             public void config() {
                 super.config();
                 config.setValue(app.ViewOptions.ScrollbarType, 0);
-                config.setValue(app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.doNothing);
+                config.setValue(app.MiscOptions.WordTappingAction, MiscOptions.WordTappingActionEnum.openDictionary);
                 config.setValue(app.ImageOptions.TapAction, ImageOptions.TapActionEnum.doNothing);
             }
         };
@@ -2183,12 +2183,12 @@ public class FBReaderView extends RelativeLayout {
     }
 
     public void showControls() {
-        ActiveAreasView areas = new ActiveAreasView(getContext());
-        int w = getWidth();
-        if (w == 0)
-            return; // activity closed
-        areas.create(app, w);
-        showControls(this, areas);
+//        ActiveAreasView areas = new ActiveAreasView(getContext());
+//        int w = getWidth();
+//        if (w == 0)
+//            return; // activity closed
+//        areas.create(app, w);
+//        showControls(this, areas);
     }
 
     @Override
