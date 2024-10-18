@@ -9,3 +9,7 @@
 .externalNativeBuild
 app/src/main/assets/*.jar
 app/src/main/assets/*.dex
+/android-bookreader-library/.idea/
+/android-bookreader-library/build/
+/.idea/
+/app/release/

@@ -15,7 +15,9 @@ android {
         multiDexEnabled true
     }
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES']
+        }
     }
     signingConfigs {
         release {
@@ -43,6 +45,7 @@ android {
             enableSplit = true
         }
     }
+    namespace 'com.github.axet.bookreader'
 }
 
 dependencies {
